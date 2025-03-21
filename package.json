@@ -1,6 +1,6 @@
 {
   "name": "rgstry",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A type-safe metadata registry library for TypeScript decorators",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

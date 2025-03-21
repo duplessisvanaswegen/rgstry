@@ -4,58 +4,120 @@ on:
   release:
     types: [created]
 
+# Ensure this workflow has write permissions
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      # Checkout the code including tags
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      # Setup Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
-
+      
+      # Debug - show GitHub ref
+      - name: Debug GitHub ref
+        run: echo "GitHub ref is ${GITHUB_REF}"
+      
+      # Extract version from tag
       - name: Extract version from tag
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+      
+      # Update version in package.json
       - name: Update version in package.json
-        run: npm version ${{ steps.get_version.outputs.VERSION }} --no-git-tag-version
-
+        run: |
+          npm version ${{ steps.get_version.outputs.VERSION }} --no-git-tag-version
+          echo "Updated package.json version to ${{ steps.get_version.outputs.VERSION }}"
+          cat package.json | grep version
+      
+      # Install dependencies
       - name: Install dependencies
         run: npm ci
-
+      
+      # Run tests
       - name: Run tests
         run: npm test
-
+      
+      # Build package
       - name: Build
         run: npm run build:clean
-
+      
+      # Generate release notes
       - name: Generate release notes
         run: |
-          if [ -f "CHANGELOG.md" ]; then
-            version="${{ steps.get_version.outputs.VERSION }}"
-            # Extract entry for this version from CHANGELOG.md and save to release-notes.md
+          version="${{ steps.get_version.outputs.VERSION }}"
+          echo "Extracting release notes for version $version"
+          
+          if [ -f "RELEASE_NOTES.md" ]; then
+            echo "Using RELEASE_NOTES.md"
+            # Extract the section for this version (from ## vX.Y.Z to the next ## or end of file)
+            # This handles both v1.0.1 format and 1.0.1 format
+            sed -n "/## v\{0,1\}${version}/,/^## /p" RELEASE_NOTES.md | sed '$d' > release-notes.md
+            
+            # If nothing was extracted (or file is empty), try the CHANGELOG
+            if [ ! -s release-notes.md ] && [ -f "CHANGELOG.md" ]; then
+              echo "No matching version found in RELEASE_NOTES.md, trying CHANGELOG.md"
+              sed -n "/## \[${version}\]/,/## \[/p" CHANGELOG.md | sed '$d' > release-notes.md
+            fi
+          elif [ -f "CHANGELOG.md" ]; then
+            echo "Using CHANGELOG.md"
             sed -n "/## \[${version}\]/,/## \[/p" CHANGELOG.md | sed '$d' > release-notes.md
           else
-            echo "No CHANGELOG.md found, using RELEASE_NOTES.md if available"
-            if [ -f "RELEASE_NOTES.md" ]; then
-              cp RELEASE_NOTES.md release-notes.md
-            else
-              echo "# Release v${{ steps.get_version.outputs.VERSION }}" > release-notes.md
-              echo "Initial release" >> release-notes.md
-            fi
+            echo "No release notes found, creating default"
+            echo "# Release v${{ steps.get_version.outputs.VERSION }}" > release-notes.md
+            echo "See CHANGELOG.md for details" >> release-notes.md
           fi
-
+          
+          # If still empty, create a basic note
+          if [ ! -s release-notes.md ]; then
+            echo "# Release v${{ steps.get_version.outputs.VERSION }}" > release-notes.md
+            echo "No specific release notes found for this version." >> release-notes.md
+          fi
+          
+          echo "Release notes content:"
+          cat release-notes.md
+      
+      # Update GitHub Release description
       - name: Update GitHub Release description
         uses: softprops/action-gh-release@v1
         with:
           body_path: release-notes.md
           token: ${{ secrets.GITHUB_TOKEN }}
-
+      
+      # Verify npm token is set
+      - name: Verify NPM_TOKEN is set
+        run: |
+          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "::error::NPM_TOKEN is not set. Please add it to your repository secrets."
+            exit 1
+          else
+            echo "NPM_TOKEN is set."
+          fi
+      
+      # Show npm configuration (without exposing token)
+      - name: Check npm config
+        run: npm config list
+      
+      # Publish to npm
       - name: Publish to npm
-        run: npm publish
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" > .npmrc
+          npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

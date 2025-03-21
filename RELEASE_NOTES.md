@@ -1,10 +1,29 @@
-# Release Notes for v1.0.0
+# Release Notes
 
-## Overview
+## v1.0.1 (2025-03-21)
 
-We're excited to announce the first official release of `rgstry`, a type-safe metadata registry library for TypeScript decorators with optional runtime type inference. This library provides a flexible foundation for building decorator-based systems with complete type safety.
+This release focuses on improving the project infrastructure and automation.
 
-## Features
+### What's New
+
+- **Automated Publishing**: Added GitHub Actions workflow to automatically publish to npm when releases are created
+- **Continuous Integration**: Added CI workflow to test PRs and commits to main branch
+- **Improved Documentation**: Enhanced examples and documentation structure
+- **Issue Templates**: Added templates for bug reports and feature requests
+
+### Technical Improvements
+
+- Fixed npm publishing configuration
+- Added GitHub Actions workflows for CI/CD
+- Added comprehensive release process documentation
+
+---
+
+## v1.0.0 (2025-03-21)
+
+Initial release of `rgstry`, a type-safe metadata registry library for TypeScript decorators with optional runtime type inference.
+
+### Features
 
 - **Type-safe metadata registration and retrieval**: Create strongly-typed decorators with full TypeScript support
 - **Support for both class and method decorators**: Apply metadata at different levels of granularity
@@ -15,15 +34,15 @@ We're excited to announce the first official release of `rgstry`, a type-safe me
 - **Advanced type inference**: Optional Reflect Metadata integration for runtime type information
 - **ESM and TypeScript support**: Modern module format with comprehensive type definitions
 
-## Getting Started
+### Getting Started
 
-### Basic Installation
+#### Basic Installation
 
 ```bash
 npm install rgstry
 ```
 
-### With Reflect Metadata (Optional)
+#### With Reflect Metadata (Optional)
 
 ```bash
 npm install rgstry reflect-metadata
@@ -35,9 +54,9 @@ And add this to your entry point:
 import 'reflect-metadata';
 ```
 
-## Usage Examples
+### Usage Examples
 
-### Basic Usage
+#### Basic Usage
 
 ```typescript
 import { Rgstry } from 'rgstry';
@@ -63,7 +82,7 @@ const instance = new AdminController();
 const instanceMetadata = auth.getInstanceMetadata(instance);
 ```
 
-### With Reflect Metadata
+#### With Reflect Metadata
 
 ```typescript
 import 'reflect-metadata';
@@ -85,13 +104,9 @@ const paramTypes = routes.getMethodParamTypes(UserController.prototype, 'getUser
 const returnType = routes.getMethodReturnType(UserController.prototype, 'getUser');
 ```
 
-## Documentation
+### Documentation
 
 For more detailed examples and API documentation, please refer to:
 - [Basic Usage Guide](./examples/basic-usage.md)
 - [Reflect Metadata Guide](./examples/reflect-metadata-example.md)
 - [API Documentation](./README.md)
-
-## Feedback and Contributions
-
-We welcome feedback, bug reports, and contributions! Please open issues or submit pull requests on our GitHub repository.
