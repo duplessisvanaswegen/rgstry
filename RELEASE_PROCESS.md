@@ -2,15 +2,9 @@
 
 This document outlines the steps to create a new release.
 
-## 1. Update Version and Changelog
+## 1. Update Changelog
 
-1. Update the version in `package.json`:
-   ```bash
-   # For example, to release v1.0.1
-   npm version 1.0.1 --no-git-tag-version
-   ```
-
-2. Update `CHANGELOG.md` with details about the new version.
+1. Update `CHANGELOG.md` with details about the new version.
 
 ## 2. Commit Changes
 
@@ -47,6 +41,7 @@ git push origin v1.0.1
 7. Click "Publish release"
 
 The GitHub Actions workflow will automatically:
+
 - Run tests
 - Build the package
 - Publish to npm
